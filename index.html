@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <script src="desktop-extras.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi POS Kasir</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="pos-wrapper">
+
+  <div id="loginSection" class="auth-container">
+    <div class="auth-card">
+      <h2>POS Kasir</h2><p>Masukkan akun untuk melanjutkan</p>
+      <div id="loginAlert" class="alert alert-danger">Username atau password salah!</div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group"><label for="username">Username</label><input type="text" id="username" placeholder="Masukkan username" required></div>
+        <div class="form-group"><label for="password">Password</label>
+          <div class="password-wrapper"><input type="password" id="password" placeholder="Masukkan password" required>
+            <span class="toggle-password" onclick="togglePasswordVisibility()"><svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+          </div></div>
+        <button type="submit" class="btn-submit">Masuk Ke Kasir</button>
+      </form>
+      <div class="auth-footer"><a onclick="showForgotPassword()">Lupa Password?</a> &nbsp;·&nbsp; <a onclick="showRegister()">Buat Akun</a></div>
+    </div>
+  </div>
+
+  <div id="forgotPasswordSection" class="auth-container" style="display:none">
+    <div id="registerSection" class="auth-container" style="display:none">
+  <div class="auth-card">
+    <h2>Buat Akun</h2><p>Daftarkan akun kasir baru</p>
+    <div id="regAlert" class="alert"></div>
+    <form onsubmit="handleRegister(event)">
+      <div class="form-group"><label for="regUser">Username</label><input type="text" id="regUser" placeholder="4-20 karakter" required></div>
+      <div class="form-group"><label for="regPass">Password</label><input type="password" id="regPass" placeholder="Minimal 6 karakter" required></div>
+      <div class="form-group"><label for="regPass2">Ulangi Password</label><input type="password" id="regPass2" required></div>
+      <div class="form-group"><label for="regCode">Kode Pendaftaran</label><input type="password" id="regCode" placeholder="Kode dari pemilik" required></div>
+      <button type="submit" class="btn-submit">Daftar</button>
+    </form>
+    <div class="auth-footer"><a onclick="showLogin()">Sudah punya akun? Masuk</a></div>
+  </div>
+</div>
+    <div class="auth-card">
+      <h2>Lupa Password</h2><p>Masukkan username atau email terdaftar Anda</p>
+      <div id="resetAlert" class="alert alert-success"></div>
+      <form onsubmit="handleResetPassword(event)">
+        <div class="form-group"><label for="resetAccount">Username / Email</label><input type="text" id="resetAccount" placeholder="Masukkan username/email" required></div>
+        <button type="submit" class="btn-submit">Kirim Bantuan Reset</button>
+      </form>
+      <div class="auth-footer"><a onclick="showLogin()">Kembali ke Halaman Login</a></div>
+    </div>
+  </div>
+
+  <div id="posSection" class="pos-container">
+    <div class="header-pos">
+      <div style="display:flex;align-items:center"><button class="hamb" onclick="toggleSidebar()">☰</button><h2 id="pageTitle">Kasir</h2></div>
+      <div class="user-info"><span>Kasir: <strong id="loggedUser">Admin</strong></span><button class="btn-logout" onclick="handleLogout()">Keluar</button></div>
+    </div>
+    <div id="closedBar">Outlet sudah ditutup hari ini. Buka kembali lewat menu Tutup Outlet untuk transaksi baru.</div>
+
+    <div id="viewKasir" class="main-grid">
+      <div class="panel"><h3>Daftar Produk</h3><div id="productList" class="product-grid"><p>Memuat produk dari database...</p></div></div>
+      <div class="panel">
+        <h3>Keranjang Belanja</h3>
+        <button id="typeBtn" class="type-btn" onclick="openTypeModal()"></button>
+        <div id="cartList" style="margin-top:15px;max-height:250px;overflow-y:auto"></div>
+        <div style="margin-top:20px;padding-top:15px;border-top:2px solid #1e3c72;font-size:15px">
+          <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:15px"><span>Total:</span><span id="cartTotal">Rp 0</span></div>
+          <button id="btnPay" class="btn-submit" onclick="openPaymentModal()" style="display:none">Bayar Sekarang</button>
+        </div>
+      </div>
+    </div>
+    <div id="viewOther" class="panel" style="display:none"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="backdrop" class="backdrop" onclick="toggleSidebar()"></div>
+<div id="sidebar" class="sidebar">
+  <div class="profile"><div class="avatar" id="avatar">A</div><div style="min-width:0"><b id="sbUser">Admin</b><div class="muted" style="margin:0" id="sbStore"></div></div></div>
+  <div id="menuList"></div>
+</div>
+
+<!-- MODAL TIPE PENJUALAN -->
+<div id="typeModal" class="modal-overlay"><div class="modal-card">
+  <h3 style="text-align:left">Tipe Penjualan</h3>
+  <div id="typeList"></div>
+  <button class="btn-submit" onclick="pickType()">Pilih</button>
+  <button class="btn-cancel" onclick="$('typeModal').style.display='none'">Batal</button>
+</div></div>
+
+<!-- MODAL PEMBAYARAN -->
+<div id="paymentModal" class="modal-overlay"><div class="modal-card">
+  <h3>Pembayaran</h3>
+  <div style="margin-bottom:15px;background:#eef2f5;padding:12px;border-radius:6px;font-size:14px">
+    <div style="font-size:12px;color:#666;margin-bottom:4px" id="modalType"></div>
+    <strong>Total Bayar: </strong><span id="modalTotal" style="color:#1e3c72;font-weight:bold">Rp 0</span></div>
+  <div class="form-group"><label for="payMethod">Metode Pembayaran</label>
+    <select id="payMethod" onchange="togglePayMethod()"><option value="CASH">Tunai (Cash)</option><option value="QRIS">QRIS / E-Wallet</option></select></div>
+  <div id="cashGroup" class="form-group"><label for="cashAmount">Uang Diterima (Rp)</label>
+    <input type="number" id="cashAmount" placeholder="Masukkan nominal uang" oninput="calculateChange()">
+    <div style="margin-top:8px;font-size:13px;color:#555">Kembalian: <strong id="cashChange" style="color:#28a745">Rp 0</strong></div></div>
+  <div id="qrisGroup" class="qris-box"><p style="font-size:12px;color:#666;margin-bottom:10px">Scan QRIS di bawah untuk membayar:</p>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=POS_KASIR_DEMO" alt="QRIS Code">
+    <p style="font-size:11px;color:#888;margin-top:8px">Pastikan nominal transfer sesuai total bayar.</p></div>
+  <button class="btn-submit" onclick="processTransaction()">Selesaikan Transaksi</button>
+  <button class="btn-cancel" onclick="closePaymentModal()">Batal</button>
+</div></div>
+
+<!-- MODAL STRUK -->
+<div id="receiptModal" class="modal-overlay"><div class="modal-card" style="max-width:360px">
+  <h3>Pratinjau Struk</h3>
+  <div id="receiptPrintArea" style="background:#fff;padding:15px;border:1px solid #ddd;font-family:'Courier New',monospace;font-size:13px;color:#000;margin-bottom:15px">
+    <div style="text-align:center;margin-bottom:10px">
+      <h4 id="rStore" style="margin:0;font-size:16px"></h4>
+      <p id="rAddr" style="margin:2px 0 0;font-size:11px"></p><p id="rTelp" style="margin:2px 0 0;font-size:11px"></p>
+      <div style="border-bottom:1px dashed #000;margin:8px 0"></div></div>
+    <div style="font-size:11px;margin-bottom:8px">
+      <div>Tanggal : <span id="rDate"></span></div><div>Kasir   : <span id="rCashier"></span></div>
+      <div>Tipe    : <span id="rType"></span></div><div>Metode  : <span id="rMethod"></span></div></div>
+    <div style="border-bottom:1px dashed #000;margin:8px 0"></div>
+    <div id="rItems"></div>
+    <div style="border-bottom:1px dashed #000;margin:8px 0"></div>
+    <div style="display:flex;justify-content:space-between"><span>TOTAL</span><strong id="rTotal"></strong></div>
+    <div id="rCashRow" style="display:flex;justify-content:space-between"><span>Bayar</span><span id="rCash"></span></div>
+    <div id="rChangeRow" style="display:flex;justify-content:space-between"><span>Kembalian</span><span id="rChange"></span></div>
+    <div style="border-bottom:1px dashed #000;margin:8px 0"></div>
+    <div style="text-align:center;font-size:11px;margin-top:10px"><p>*** TERIMA KASIH ***</p><p>Barang yang sudah dibeli</p><p>tidak dapat ditukar/dikembalikan</p></div>
+  </div>
+  <button class="btn-submit" onclick="window.print()" style="background:#28a745">Cetak Struk / Save PDF</button>
+  <button class="btn-cancel" onclick="closeReceiptModal()">Selesai &amp; Transaksi Baru</button>
+</div></div>
+
+<!-- STRUK HARIAN -->
+<div id="dailyModal" class="modal-overlay"><div class="modal-card" style="max-width:360px">
+  <h3>Resi Penjualan Harian</h3>
+  <div id="dailyPrintArea" style="background:#fff;padding:15px;border:1px solid #ddd;font-family:'Courier New',monospace;font-size:12px;color:#000;margin-bottom:15px"></div>
+  <button class="btn-submit" onclick="window.print()" style="background:#28a745">Cetak Resi / Save PDF</button>
+  <button class="btn-cancel" onclick="$('dailyModal').style.display='none'">Tutup</button>
+</div></div>
+
+<!-- MODAL TUTUP OUTLET: lapisan gelap + kartu modal -->
+<div class="tm-ov" id="tmOv" aria-hidden="true">
+  <div class="tm-sheet" id="tmSheet" data-view="confirm" role="dialog" aria-modal="true" aria-labelledby="tmTitle">
+
+    <!-- Layar 1: konfirmasi -->
+    <div class="tm-view tm-confirm">
+      <h2 id="tmTitle">Tutup outlet hari ini?</h2>
+      <p class="tm-sub" id="tmTanggal"></p>
+      <div class="tm-rows" id="tmRingkas"></div>
+
+      <label class="tm-label" for="tmKas">Uang tunai di laci (opsional)</label>
+      <div class="tm-money">
+        <span>Rp</span>
+        <input id="tmKas" inputmode="numeric" autocomplete="off" placeholder="0">
+      </div>
+      <div class="tm-diff" id="tmDiff"></div>
+
+      <div class="tm-actions">
+        <button class="tm-btn tm-btn-ghost" onclick="tmTutup()">Batal</button>
+        <button class="tm-btn tm-btn-red" onclick="tmProses()">Ya, tutup outlet</button>
+      </div>
+    </div>
+
+    <!-- Layar 2: sedang menyimpan -->
+    <div class="tm-view tm-process" aria-live="polite">
+      <div class="tm-spin"></div>
+      <h2>Menyimpan laporan</h2>
+      <p class="tm-sub" style="margin:0">Mohon tunggu sebentar.</p>
+    </div>
+
+    <!-- Layar 3: berhasil -->
+    <div class="tm-view tm-done" aria-live="polite">
+      <svg class="tm-okmark" viewBox="0 0 80 80" aria-hidden="true">
+        <circle cx="40" cy="40" r="36"/>
+        <path d="M24 41 l11 11 l21 -23"/>
+      </svg>
+      <h2>Outlet berhasil ditutup</h2>
+      <span class="tm-stamp" id="tmStamp"></span>
+      <div class="tm-rows" id="tmHasil"></div>
+      <div class="tm-actions">
+        <button class="tm-btn tm-btn-green" onclick="showDailyReceipt()">Cetak laporan penutupan</button>
+        <button class="tm-btn tm-btn-ghost" onclick="tmSelesai()">Selesai</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Harus di akhir body: script langsung memasang event listener ke elemen di atas -->
+<script src="script.js"></script>
+</body>
+</html>
